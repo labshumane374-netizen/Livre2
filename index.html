@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Électricité Fondamentale – Manuel Pratique</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c9973a;
+    --gold-light: #f0c060;
+    --gold-dark: #8a6020;
+    --paper: #f2e8d0;
+    --ink: #1a1208;
+    --blue-accent: #1a3a5c;
+    --steel: #4a7aaa;
+    --steel-light: #8ab0d0;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IM Fell English', serif;
+  }
+
+  #scene {
+    perspective: 2000px;
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+
+  #book-wrapper {
+    position: relative;
+    width: 700px; height: 500px;
+    transform-style: preserve-3d;
+    transform: scale(1.2);
+  }
+
+  #cover-container {
+    position: absolute;
+    width: 350px; height: 500px;
+    left: 50%; transform: translateX(-50%);
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    z-index: 100;
+    cursor: pointer;
+    transition: filter 0.3s;
+  }
+  #cover-container:hover { filter: brightness(1.08); }
+
+  .cover-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    border-radius: 2px 8px 8px 2px;
+    overflow: hidden;
+  }
+  .cover-front {
+    background: linear-gradient(160deg, #06111e 0%, #0e2236 50%, #06111e 100%);
+    border: 3px solid #2a5070;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.8), inset -4px 0 12px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .cover-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(180deg, #06111e, #0e2236);
+    border: 3px solid #2a5070;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cover-text-block {
+    position: relative; z-index: 2;
+    text-align: center; width: 100%;
+  }
+  .cover-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 24px; font-weight: 900;
+    color: #a8cce8;
+    text-shadow: 0 0 20px rgba(100,180,255,0.5), 0 2px 4px rgba(0,0,0,0.9);
+    line-height: 1.15; letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .cover-sub {
+    font-family: 'Cinzel', serif;
+    font-size: 8.5px; font-weight: 600;
+    color: #6a9abf;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .cover-bottom {
+    position: absolute; bottom: 14px; left: 0; right: 0;
+    text-align: center; z-index: 2;
+    font-family: 'Cinzel', serif; font-size: 8px;
+    color: #3a6080; letter-spacing: 2px;
+  }
+  .cover-click-hint {
+    position: absolute; bottom: -34px; left: 50%; transform: translateX(-50%);
+    font-family: 'Cinzel', serif; font-size: 11px;
+    color: var(--gold); letter-spacing: 2px;
+    animation: pulse-hint 2s ease-in-out infinite;
+    white-space: nowrap;
+  }
+  @keyframes pulse-hint {
+    0%,100%{ opacity:0.4; } 50%{ opacity:1; }
+  }
+
+  .cover-spine {
+    position: absolute;
+    left: -14px; top: 0; width: 14px; height: 500px;
+    background: linear-gradient(90deg, #020a10, #0a1e30, #060f1a);
+    border-left: 2px solid #020a10;
+    border-right: 1px solid #2a5070;
+    transform: rotateY(-90deg) translateX(-7px);
+    transform-origin: right center;
+  }
+
+  #pages-stack {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 350px; height: 500px;
+    background: linear-gradient(90deg, #e8d8b0, #f2e8d0 10%, #ede0c0 90%, #d8c898);
+    border-radius: 0 6px 6px 0;
+    box-shadow: 6px 4px 20px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: none;
+  }
+  #pages-stack::before {
+    content:'';
+    position: absolute; left: 0; top: 2px; bottom: 2px; width: 12px;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+    );
+  }
+
+  #left-page {
+    position: absolute;
+    left: 0; top: 0;
+    width: 350px; height: 500px;
+    background: var(--paper);
+    border-right: 1px solid #c8b880;
+    overflow: hidden;
+    box-shadow: inset -6px 0 12px rgba(0,0,0,0.07);
+    display: none;
+  }
+
+  #flip-container {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 350px; height: 500px;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transform: rotateY(0deg);
+    transition: transform 0.9s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    z-index: 10;
+    pointer-events: none;
+    display: none;
+  }
+  #flip-container.flipping { pointer-events: none; }
+
+  .flip-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    overflow: hidden;
+  }
+  #flip-front {
+    background: var(--paper);
+    box-shadow: inset -4px 0 12px rgba(0,0,0,0.1);
+  }
+  #flip-back {
+    background: var(--paper);
+    transform: rotateY(180deg);
+    box-shadow: inset 4px 0 12px rgba(0,0,0,0.1);
+  }
+
+  .page-content {
+    width: 100%; height: 100%;
+    padding: 28px 26px 22px;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .page-number {
+    position: absolute; bottom: 12px;
+    font-family: 'Cinzel', serif; font-size: 11px;
+    color: var(--gold-dark); letter-spacing: 1px;
+  }
+  .page-number.left { left: 26px; }
+  .page-number.right { right: 26px; }
+
+  .page-chapter {
+    font-family: 'Cinzel', serif; font-size: 9px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--blue-accent);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--steel);
+    padding-bottom: 5px;
+  }
+  .page-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 14px; font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px; line-height: 1.3;
+    text-align: center;
+  }
+  .page-body {
+    font-family: 'IM Fell English', serif;
+    font-size: 11px; line-height: 1.6;
+    color: #2a1e0a;
+    text-align: justify;
+    flex: 1;
+    overflow: hidden;
+  }
+  .page-body p { margin-bottom: 8px; }
+  .page-body .dropcap {
+    float: left; font-family: 'Cinzel Decorative', serif;
+    font-size: 40px; line-height: 0.8;
+    color: var(--blue-accent);
+    margin: 4px 6px 0 0;
+  }
+  .divider {
+    text-align: center; color: var(--steel);
+    font-size: 14px; margin: 8px 0;
+    letter-spacing: 8px;
+  }
+  .note-block {
+    border-left: 3px solid var(--steel);
+    padding: 7px 10px;
+    margin: 8px 0;
+    background: rgba(74,122,170,0.06);
+    font-style: italic;
+    font-size: 10.5px; color: #2a3a50;
+  }
+  .formula-box {
+    border: 2px solid var(--steel);
+    padding: 8px 14px;
+    margin: 10px auto;
+    background: rgba(74,122,170,0.08);
+    text-align: center;
+    max-width: 200px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--ink);
+    letter-spacing: 3px;
+  }
+  .formula-box .formula-label {
+    font-size: 8.5px;
+    color: var(--steel);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .ornament {
+    text-align: center; font-size: 16px;
+    color: var(--steel); margin: 8px 0;
+    letter-spacing: 4px;
+  }
+  .schema-box {
+    border: 1px solid var(--steel);
+    padding: 8px;
+    margin: 8px auto;
+    background: rgba(74,122,170,0.05);
+    text-align: center;
+    max-width: 240px;
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--blue-accent);
+    line-height: 1.5;
+  }
+  .schema-box .caption {
+    font-size: 8.5px; color: var(--steel);
+    font-family: 'Cinzel', serif; letter-spacing: 1px;
+    margin-top: 4px; font-style: italic;
+  }
+
+  #nav-prev, #nav-next {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(74,122,170,0.15);
+    border: 1px solid var(--steel);
+    color: var(--steel-light);
+    width: 36px; height: 60px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    z-index: 200;
+    font-family: serif;
+    user-select: none;
+  }
+  #nav-prev { left: -52px; border-radius: 6px 0 0 6px; }
+  #nav-next { right: -52px; border-radius: 0 6px 6px 0; }
+  #nav-prev:hover, #nav-next:hover {
+    background: rgba(74,122,170,0.35);
+    box-shadow: 0 0 12px rgba(74,122,170,0.4);
+  }
+  #nav-prev.hidden, #nav-next.hidden { opacity: 0; pointer-events: none; }
+
+  #page-indicator {
+    position: absolute; bottom: -44px; left: 50%; transform: translateX(-50%);
+    font-family: 'Cinzel', serif; font-size: 11px;
+    color: var(--gold); letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  #cover-container.opening {
+    animation: cover-open 1.2s cubic-bezier(0.645, 0.045, 0.355, 1.000) forwards;
+  }
+  @keyframes cover-open {
+    0%   { transform: translateX(-50%) rotateY(0deg); }
+    100% { transform: translateX(-50%) rotateY(-160deg); }
+  }
+  #cover-container.opened {
+    transform: translateX(-50%) rotateY(-160deg);
+    pointer-events: none;
+  }
+
+  #flip-container::after {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 40px; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.12));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .page-content::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+<div id="scene">
+  <div id="book-wrapper">
+
+    <div id="left-page">
+      <div class="page-content" id="left-content"></div>
+    </div>
+
+    <div id="pages-stack"><div id="pages-stack-content" class="page-content" style="background:var(--paper);"></div></div>
+
+    <div id="flip-container">
+      <div class="flip-face" id="flip-front">
+        <div class="page-content" id="flip-front-content"></div>
+      </div>
+      <div class="flip-face" id="flip-back">
+        <div class="page-content" id="flip-back-content"></div>
+      </div>
+    </div>
+
+    <!-- COVER -->
+    <div id="cover-container">
+      <div class="cover-face cover-front">
+        <!-- Background radial glow -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%, #102840 0%, #06111e 75%);"></div>
+        <!-- Horizontal circuit lines -->
+        <div style="position:absolute;top:180px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#2a5070 20%,#2a5070 80%,transparent);"></div>
+        <div style="position:absolute;top:310px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#2a5070 20%,#2a5070 80%,transparent);"></div>
+        <!-- Decorative corners -->
+        <div style="position:absolute;top:8px;left:8px;width:28px;height:28px;border-top:2px solid #2a5070;border-left:2px solid #2a5070;"></div>
+        <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-top:2px solid #2a5070;border-right:2px solid #2a5070;"></div>
+        <div style="position:absolute;bottom:8px;left:8px;width:28px;height:28px;border-bottom:2px solid #2a5070;border-left:2px solid #2a5070;"></div>
+        <div style="position:absolute;bottom:8px;right:8px;width:28px;height:28px;border-bottom:2px solid #2a5070;border-right:2px solid #2a5070;"></div>
+        <!-- Corner dots -->
+        <div style="position:absolute;top:34px;left:34px;width:4px;height:4px;background:#4a7aaa;border-radius:50%;"></div>
+        <div style="position:absolute;top:34px;right:34px;width:4px;height:4px;background:#4a7aaa;border-radius:50%;"></div>
+        <div style="position:absolute;bottom:34px;left:34px;width:4px;height:4px;background:#4a7aaa;border-radius:50%;"></div>
+        <div style="position:absolute;bottom:34px;right:34px;width:4px;height:4px;background:#4a7aaa;border-radius:50%;"></div>
+        <!-- Central decorative symbol -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border:1px solid #2a5070;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <div style="width:50px;height:50px;border:1px solid #1a3a5c;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+            <div style="font-family:'Cinzel',serif;font-size:20px;color:#4a7aaa;font-weight:600;">E</div>
+          </div>
+        </div>
+        <!-- Title block -->
+        <div class="cover-text-block" style="position:absolute;top:24px;left:12px;right:12px;">
+          <div class="cover-title">ÉLECTRICITÉ<br>FONDAMENTALE</div>
+          <div style="height:1px;background:linear-gradient(90deg,transparent,#2a5070,transparent);margin:8px 0;"></div>
+          <div class="cover-sub">Manuel Théorique et Pratique</div>
+        </div>
+        <div class="cover-bottom">ÉDITIONS TECHNIQUES · LOS SANTOS</div>
+      </div>
+      <div class="cover-face cover-back">
+        <div style="color:#3a6080;font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;text-align:center;padding:20px;">
+          <div style="font-size:16px;margin-bottom:10px;color:#4a7aaa;">◆</div>
+          ÉDITIONS TECHNIQUES<br>
+          <div style="font-size:9px;margin-top:8px;color:#2a4060;">LOS SANTOS · SAN ANDREAS</div>
+        </div>
+      </div>
+      <div class="cover-spine"></div>
+      <div class="cover-click-hint">▶ Cliquez pour ouvrir</div>
+    </div>
+
+    <button id="nav-prev" class="hidden" onclick="flipPrev()">◀</button>
+    <button id="nav-next" class="hidden" onclick="flipNext()">▶</button>
+    <div id="page-indicator" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const spreads = [
+  // SPREAD 0 — Préface + Table
+  {
+    left: `<div class="page-chapter">Préface</div>
+<div class="page-title">Avant-propos</div>
+<div class="page-body">
+<p><span class="dropcap">L</span>électricité est au coeur de chaque appareil, chaque installation, chaque véhicule que nous utilisons au quotidien. Pourtant, rares sont ceux qui en comprennent les principes de base.</p>
+<p>Ce manuel a été rédigé pour combler cette lacune. Il s'adresse à quiconque souhaite comprendre l'électricité sans nécessairement être électricien de métier.</p>
+<div class="divider">◆ ◆ ◆</div>
+<p>Les concepts présentés ici sont volontairement accessibles. Chaque chapitre progresse depuis les notions élémentaires vers des applications concrètes, en gardant toujours à l'esprit la sécurité.</p>
+<p>Bonne lecture.</p>
+</div>
+<div class="page-number left">II</div>`,
+
+    right: `<div class="page-chapter">Sommaire</div>
+<div class="page-title">Table des Matières</div>
+<div class="page-body" style="font-family:'Cinzel',serif;font-size:10.5px;">
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+  ${[
+    ['I',   "La Nature de l'Électricité",    '1'],
+    ['II',  'Tension, Intensité, Résistance', '3'],
+    ['III', 'Les Circuits Électriques',       '5'],
+    ['IV',  'Sécurité et Précautions',        '7'],
+  ].map(([num,title,page])=>`
+  <div style="display:flex;align-items:baseline;gap:4px;">
+    <span style="color:var(--blue-accent);min-width:16px;">${num}.</span>
+    <span style="flex:1;border-bottom:1px dotted #8ab0d0;">${title}</span>
+    <span style="color:var(--steel);min-width:20px;text-align:right;">${page}</span>
+  </div>`).join('')}
+</div>
+</div>
+<div class="page-number right">III</div>`
+  },
+
+  // SPREAD 1 — Chapitre I
+  {
+    left: `<div class="page-chapter">Chapitre I</div>
+<div class="page-title">La Nature<br>de l'Électricité</div>
+<div class="page-body">
+<p><span class="dropcap">T</span>oute matière est composée d'atomes. Chaque atome contient un noyau chargé positivement et des électrons chargés négativement qui gravitent autour de lui.</p>
+<p>Dans certains matériaux, les électrons des couches externes sont peu retenus par leur noyau. Ils peuvent alors se déplacer librement d'un atome à l'autre. Ces matériaux sont appelés <em>conducteurs</em>. Le cuivre, l'aluminium et l'acier en sont des exemples courants.</p>
+<div class="divider">· · ·</div>
+<p>À l'inverse, dans les <em>isolants</em>, les électrons sont solidement liés à leur atome et ne circulent pas. Le plastique, le caoutchouc et le verre jouent ce rôle dans les installations électriques.</p>
+</div>
+<div class="page-number left">1</div>`,
+
+    right: `<div class="page-chapter">Chapitre I</div>
+<div class="page-body">
+<p>Le <em>courant électrique</em> est le déplacement ordonné de ces électrons libres à travers un conducteur. On le mesure en <strong>ampères</strong> (A), du nom du physicien André-Marie Ampère.</p>
+<div class="schema-box">
+<div>— e⁻ → → → → → e⁻ —</div>
+<div style="margin-top:2px;">— e⁻ → → → → → e⁻ —</div>
+<div style="margin-top:2px;">— e⁻ → → → → → e⁻ —</div>
+<div class="caption">Déplacement des électrons dans un conducteur</div>
+</div>
+<p>Par convention, le sens du courant est défini comme allant du pôle positif vers le pôle négatif, soit dans le sens inverse du déplacement réel des électrons. Cette convention, établie avant la découverte de l'électron, est conservée à ce jour.</p>
+</div>
+<div class="page-number right">2</div>`
+  },
+
+  // SPREAD 2 — Chapitre II
+  {
+    left: `<div class="page-chapter">Chapitre II</div>
+<div class="page-title">Tension, Intensité<br>et Résistance</div>
+<div class="page-body">
+<p><span class="dropcap">L</span>a <em>tension</em>, aussi appelée différence de potentiel, est la force qui pousse les électrons à se déplacer. Elle se mesure en <strong>volts</strong> (V). Une pile de 9 V fournit une tension de 9 volts entre ses deux bornes.</p>
+<p>L'<em>intensité</em> est la quantité d'électrons qui traverse un point du circuit par seconde. Elle se mesure en <strong>ampères</strong> (A). Une intensité élevée signifie qu'un grand nombre d'électrons circulent.</p>
+<div class="divider">· · ·</div>
+<p>La <em>résistance</em> est l'opposition qu'un matériau oppose au passage du courant. Elle se mesure en <strong>ohms</strong> (Ω). Plus la résistance est élevée, moins le courant passe facilement.</p>
+</div>
+<div class="page-number left">3</div>`,
+
+    right: `<div class="page-chapter">Chapitre II</div>
+<div class="page-body">
+<p>Ces trois grandeurs sont liées par la <em>loi d'Ohm</em>, énoncée par Georg Simon Ohm en 1827. Elle établit que la tension est égale au produit de l'intensité par la résistance.</p>
+<div class="formula-box">
+  U = I × R
+  <div class="formula-label">Loi d'Ohm — U en volts, I en ampères, R en ohms</div>
+</div>
+<p>Cette loi permet de calculer n'importe laquelle des trois valeurs si les deux autres sont connues. Si la tension augmente à résistance constante, l'intensité augmente proportionnellement. C'est le fondement de l'analyse de tout circuit électrique.</p>
+<div class="note-block">Exemple : une résistance de 100 Ω soumise à 12 V laisse passer un courant de 0,12 A, soit 120 mA.</div>
+</div>
+<div class="page-number right">4</div>`
+  },
+
+  // SPREAD 3 — Chapitre III
+  {
+    left: `<div class="page-chapter">Chapitre III</div>
+<div class="page-title">Les Circuits<br>Électriques</div>
+<div class="page-body">
+<p><span class="dropcap">U</span>n circuit électrique est un chemin fermé permettant au courant de circuler depuis la source jusqu'aux récepteurs et d'y revenir. Sans boucle fermée, aucun courant ne peut circuler.</p>
+<p>Dans un <em>circuit en série</em>, les composants sont branchés l'un après l'autre sur le même fil. Le courant est identique en tout point du circuit. Les tensions s'additionnent. Si un composant est défaillant, tout le circuit s'arrête.</p>
+<div class="schema-box">
++——[R1]——[R2]——[R3]——+
+|                      |
++———————[Source]———————+
+<div class="caption">Circuit en série — trois résistances</div>
+</div>
+</div>
+<div class="page-number left">5</div>`,
+
+    right: `<div class="page-chapter">Chapitre III</div>
+<div class="page-body">
+<p>Dans un <em>circuit en parallèle</em>, les composants sont branchés entre les mêmes deux points, formant plusieurs branches. La tension est identique sur chaque branche. Les courants s'additionnent. Si une branche tombe en panne, les autres continuent de fonctionner.</p>
+<div class="schema-box">
++——+——[R1]——+——+
+|   |         |   |
+|   +——[R2]——+   |
+|   |         |   |
+|   +——[R3]——+   |
+|                  |
++——[Source]————+
+<div class="caption">Circuit en parallèle — trois résistances</div>
+</div>
+<p>Les installations domestiques et automobiles utilisent principalement le montage en parallèle, ce qui permet à chaque appareil de recevoir la pleine tension de l'alimentation indépendamment des autres.</p>
+</div>
+<div class="page-number right">6</div>`
+  },
+
+  // SPREAD 4 — Chapitre IV + Conclusion
+  {
+    left: `<div class="page-chapter">Chapitre IV</div>
+<div class="page-title">Sécurité<br>et Précautions</div>
+<div class="page-body">
+<p><span class="dropcap">L</span>électricité est dangereuse. Un courant de seulement 0,1 A traversant le corps humain peut provoquer un arrêt cardiaque. La tension du réseau domestique, 220 V en San Andreas, est largement suffisante pour être mortelle.</p>
+<div class="divider">· · ·</div>
+<p>Règles fondamentales à respecter :</p>
+<div style="font-family:'Cinzel',serif;font-size:9.5px;display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+  <div style="border-left:2px solid var(--steel);padding-left:8px;">Couper l'alimentation avant toute intervention</div>
+  <div style="border-left:2px solid var(--steel);padding-left:8px;">Vérifier l'absence de tension avec un multimètre</div>
+  <div style="border-left:2px solid var(--steel);padding-left:8px;">Utiliser des outils isolés et des gants adaptés</div>
+  <div style="border-left:2px solid var(--steel);padding-left:8px;">Ne jamais travailler seul sur une installation</div>
+  <div style="border-left:2px solid var(--steel);padding-left:8px;">Respecter les sections de câbles selon les charges</div>
+</div>
+</div>
+<div class="page-number left">7</div>`,
+
+    right: `<div class="page-chapter">Conclusion</div>
+<div class="page-title">Pour Aller<br>Plus Loin</div>
+<div class="page-body">
+<p>Ce manuel couvre les bases indispensables à la compréhension de l'électricité. Ces principes — courant, tension, résistance, circuits — sont les briques de tout ce qui suit.</p>
+<p>Pour approfondir, il est conseillé d'étudier les condensateurs, les bobines d'inductance, le courant alternatif et les transformateurs. Ces notions, plus avancées, reposent toutes sur les fondements exposés ici.</p>
+<div class="ornament">◆ ◆ ◆</div>
+<p>La pratique est indissociable de la théorie. Utiliser un multimètre, mesurer des tensions et des courants sur de petits montages à basse tension reste le meilleur moyen de consolider ces acquis.</p>
+<div style="text-align:center;margin-top:14px;">
+  <div style="font-family:'Cinzel Decorative',serif;font-size:11px;color:var(--blue-accent);">Éditions Techniques</div>
+  <div style="font-family:'Cinzel',serif;font-size:8px;color:var(--steel);letter-spacing:2px;margin-top:4px;">LOS SANTOS · SAN ANDREAS</div>
+</div>
+</div>
+<div class="page-number right">8</div>`
+  }
+];
+
+let currentSpread = 0;
+let isOpen = false;
+let isAnimating = false;
+const TOTAL_SPREADS = spreads.length;
+
+const cover         = document.getElementById('cover-container');
+const flipContainer = document.getElementById('flip-container');
+const flipFront     = document.getElementById('flip-front-content');
+const flipBack      = document.getElementById('flip-back-content');
+const leftContent   = document.getElementById('left-content');
+const navPrev       = document.getElementById('nav-prev');
+const navNext       = document.getElementById('nav-next');
+const indicator     = document.getElementById('page-indicator');
+
+function renderSpread(index) {
+  const s = spreads[index];
+  leftContent.innerHTML = s.left;
+  flipFront.innerHTML   = s.right;
+  document.getElementById('pages-stack-content').innerHTML =
+    (index + 1 < TOTAL_SPREADS) ? spreads[index + 1].right : '';
+  if (index + 1 < TOTAL_SPREADS) {
+    flipBack.innerHTML = spreads[index + 1].left;
+  } else {
+    flipBack.innerHTML = `<div class="page-content"><div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:14px;">
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--steel);">◆</div>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:13px;color:var(--steel);text-align:center;">Fin du Manuel</div>
+      <div style="font-family:'Cinzel',serif;font-size:8px;color:#4a7aaa;letter-spacing:2px;text-align:center;">Éditions Techniques · Los Santos</div>
+    </div></div>`;
+  }
+  updateNav();
+  updateIndicator();
+}
+
+function updateNav() {
+  navPrev.classList.toggle('hidden', currentSpread <= 0);
+  navNext.classList.toggle('hidden', currentSpread >= TOTAL_SPREADS - 1);
+}
+
+function updateIndicator() {
+  if (!isOpen) { indicator.style.display='none'; return; }
+  indicator.style.display='block';
+  indicator.textContent = `Pages ${currentSpread * 2 + 2}–${currentSpread * 2 + 3} / ${TOTAL_SPREADS * 2 + 1}`;
+}
+
+function openBook() {
+  if (isOpen || isAnimating) return;
+  isAnimating = true;
+  cover.classList.add('opening');
+  cover.querySelector('.cover-click-hint').style.display = 'none';
+  setTimeout(() => {
+    cover.classList.remove('opening');
+    cover.classList.add('opened');
+    cover.style.display = 'none';
+    document.getElementById('left-page').style.display   = 'block';
+    document.getElementById('pages-stack').style.display = 'block';
+    flipContainer.style.display = 'block';
+    isOpen = true;
+    isAnimating = false;
+    renderSpread(0);
+    navPrev.classList.add('hidden');
+    navNext.classList.remove('hidden');
+    indicator.style.display = 'block';
+    updateIndicator();
+  }, 1200);
+}
+
+function doFlip(direction) {
+  if (isAnimating) return;
+  if (direction === 'next' && currentSpread >= TOTAL_SPREADS - 1) return;
+  if (direction === 'prev' && currentSpread <= 0) return;
+
+  isAnimating = true;
+  flipContainer.style.transition = 'transform 0.9s cubic-bezier(0.645, 0.045, 0.355, 1.000)';
+
+  if (direction === 'next') {
+    flipBack.innerHTML = (currentSpread + 1 < TOTAL_SPREADS)
+      ? spreads[currentSpread + 1].left
+      : `<div class="page-content"><div style="display:flex;align-items:center;justify-content:center;height:100%;">
+          <div style="font-family:'Cinzel Decorative',serif;font-size:13px;color:var(--steel);">Fin</div>
+        </div></div>`;
+    document.getElementById('pages-stack-content').innerHTML = '';
+    flipContainer.style.transform = 'rotateY(-180deg)';
+
+    setTimeout(() => {
+      document.getElementById('pages-stack-content').innerHTML =
+        (currentSpread + 1 < TOTAL_SPREADS) ? spreads[currentSpread + 1].right : '';
+    }, 460);
+
+    setTimeout(() => {
+      currentSpread++;
+      flipContainer.style.transition = 'none';
+      flipContainer.style.transform = 'rotateY(0deg)';
+      renderSpread(currentSpread);
+      isAnimating = false;
+    }, 920);
+
+  } else {
+    leftContent.innerHTML = spreads[currentSpread - 1].left;
+    flipBack.innerHTML    = spreads[currentSpread - 1].right;
+    document.getElementById('pages-stack-content').innerHTML = spreads[currentSpread - 1].right;
+    flipContainer.style.transform = 'rotateY(180deg)';
+    setTimeout(() => {
+      currentSpread--;
+      flipContainer.style.transition = 'none';
+      flipContainer.style.transform = 'rotateY(0deg)';
+      flipFront.innerHTML = spreads[currentSpread].right;
+      document.getElementById('pages-stack-content').innerHTML =
+        (currentSpread + 1 < TOTAL_SPREADS) ? spreads[currentSpread + 1].right : '';
+      if (currentSpread + 1 < TOTAL_SPREADS)
+        flipBack.innerHTML = spreads[currentSpread + 1].left;
+      updateNav();
+      updateIndicator();
+      isAnimating = false;
+    }, 920);
+  }
+}
+
+function flipNext() { doFlip('next'); }
+function flipPrev() { doFlip('prev'); }
+
+cover.addEventListener('click', openBook);
+
+document.addEventListener('keydown', e => {
+  if (!isOpen) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') flipNext();
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   flipPrev();
+});
+
+flipFront.innerHTML = '';
+flipBack.innerHTML  = '';
+leftContent.innerHTML = '';
+</script>
+</body>
+</html>
